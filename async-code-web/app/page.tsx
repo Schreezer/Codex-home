@@ -289,64 +289,101 @@ export default function Home() {
             )}
 
             {/* Header */}
-            <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-                <div className="container mx-auto px-6 py-4">
+            <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 safe-top">
+                <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                                <Code2 className="w-4 h-4 text-white" />
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Code2 className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                             </div>
-                            <div>
-                                <h1 className="text-xl font-semibold text-slate-900">Async Code</h1>
-                                <p className="text-sm text-slate-500">Manage parallel AI code agents (Codex & Claude)</p>
+                            <div className="min-w-0">
+                                <h1 className="text-lg sm:text-xl font-semibold text-slate-900 truncate">Async Code</h1>
+                                <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">Manage parallel AI code agents (Codex & Claude)</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <Link href="/projects">
-                                <Button variant="outline" className="gap-2">
-                                    <FolderGit2 className="w-4 h-4" />
-                                    Projects
-                                </Button>
-                            </Link>
-                            
-                            <Link href="/settings">
-                                <Button variant="outline" className="gap-2">
-                                    <Settings className="w-4 h-4" />
-                                    Settings
-                                </Button>
-                            </Link>
-                            
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Avatar className="cursor-pointer">
-                                        <AvatarFallback>
-                                            {user?.email ? 
-                                                user.email.split('@')[0].slice(0, 2).toUpperCase() : 
-                                                'U'
-                                            }
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56">
-                                    <div className="p-2">
-                                        <p className="text-sm font-medium">{user?.email}</p>
-                                        <p className="text-xs text-slate-500">Signed in</p>
-                                    </div>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={signOut} className="gap-2 text-red-600">
-                                        <LogOut className="w-4 h-4" />
-                                        Sign Out
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        <div className="flex items-center gap-2">
+                            {/* Desktop navigation */}
+                            <div className="hidden sm:flex items-center gap-4">
+                                <Link href="/projects">
+                                    <Button variant="outline" className="gap-2">
+                                        <FolderGit2 className="w-4 h-4" />
+                                        Projects
+                                    </Button>
+                                </Link>
+                                
+                                <Link href="/settings">
+                                    <Button variant="outline" className="gap-2">
+                                        <Settings className="w-4 h-4" />
+                                        Settings
+                                    </Button>
+                                </Link>
+                                
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Avatar className="cursor-pointer">
+                                            <AvatarFallback>
+                                                {user?.email ? 
+                                                    user.email.split('@')[0].slice(0, 2).toUpperCase() : 
+                                                    'U'
+                                                }
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <div className="p-2">
+                                            <p className="text-sm font-medium">{user?.email}</p>
+                                            <p className="text-xs text-slate-500">Signed in</p>
+                                        </div>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={signOut} className="gap-2 text-red-600">
+                                            <LogOut className="w-4 h-4" />
+                                            Sign Out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            {/* Mobile navigation */}
+                            <div className="sm:hidden">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon-sm">
+                                            <Settings className="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <div className="p-2">
+                                            <p className="text-sm font-medium">{user?.email}</p>
+                                            <p className="text-xs text-slate-500">Signed in</p>
+                                        </div>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/projects" className="flex items-center gap-2">
+                                                <FolderGit2 className="w-4 h-4" />
+                                                Projects
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/settings" className="flex items-center gap-2">
+                                                <Settings className="w-4 h-4" />
+                                                Settings
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={signOut} className="gap-2 text-red-600">
+                                            <LogOut className="w-4 h-4" />
+                                            Sign Out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
 
             {/* Main Content */}
-            <main className="container mx-auto px-6 py-8 max-w-6xl">
-                <div className="space-y-8">
+            <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl lg:max-w-6xl safe-bottom">
+                <div className="space-y-6 sm:space-y-8">
                     {/* Task Creation Section */}
                     <div className="space-y-6">
                         {/* Main Input Card */}
@@ -477,14 +514,15 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className="flex justify-start pt-2">
+                                <div className="flex justify-center sm:justify-start pt-2">
                                     <Button
                                         onClick={handleStartTask}
                                         disabled={isLoading || !selectedProject || !prompt.trim() || !githubToken.trim()}
-                                        className="gap-2 rounded-full min-w-[100px]"
+                                        className="w-full sm:w-auto gap-2 rounded-full min-w-[100px]"
+                                        size="lg"
                                     >
                                         <Code2 className="w-4 h-4" />
-                                        {isLoading ? 'Coding...' : 'Code'}
+                                        {isLoading ? 'Coding...' : 'Start Coding'}
                                     </Button>
                                 </div>
                             </CardContent>
