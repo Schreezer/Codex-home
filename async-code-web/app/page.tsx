@@ -24,6 +24,7 @@ import { Project, Task } from "@/types";
 import { ClaudeIcon } from "@/components/icon/claude";
 import { OpenAIIcon } from "@/components/icon/openai";
 import { toast } from "sonner";
+import { SimpleAuth } from "@/components/simple-auth";
 
 interface TaskWithProject extends Task {
     project?: Project
@@ -31,6 +32,16 @@ interface TaskWithProject extends Task {
 
 export default function Home() {
     const { user, signOut } = useAuth();
+    
+    // Enhanced logout that handles both simple auth and supabase auth
+    const handleLogout = () => {
+        // First logout from simple auth
+        if (typeof window !== 'undefined' && (window as any).simpleAuthLogout) {
+            (window as any).simpleAuthLogout();
+        }
+        // Then logout from supabase
+        signOut();
+    };
     const [prompt, setPrompt] = useState("");
     const [selectedProject, setSelectedProject] = useState<string>("");
     const [branch, setBranch] = useState("main");
@@ -270,8 +281,9 @@ export default function Home() {
     };
 
     return (
-        <ProtectedRoute>
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <SimpleAuth>
+            <ProtectedRoute>
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
             {/* Notification Banner */}
             {showNotification && (
                 <div className="bg-green-600 text-white px-6 py-3 text-center relative">
@@ -335,7 +347,7 @@ export default function Home() {
                                             <p className="text-xs text-slate-500">Signed in</p>
                                         </div>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={signOut} className="gap-2 text-red-600">
+                                        <DropdownMenuItem onClick={handleLogout} className="gap-2 text-red-600">
                                             <LogOut className="w-4 h-4" />
                                             Sign Out
                                         </DropdownMenuItem>
@@ -369,7 +381,7 @@ export default function Home() {
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={signOut} className="gap-2 text-red-600">
+                                        <DropdownMenuItem onClick={handleLogout} className="gap-2 text-red-600">
                                             <LogOut className="w-4 h-4" />
                                             Sign Out
                                         </DropdownMenuItem>
@@ -675,6 +687,7 @@ export default function Home() {
                 </div>
             </main>
         </div>
-        </ProtectedRoute>
+            </ProtectedRoute>
+        </SimpleAuth>
     );
 }
