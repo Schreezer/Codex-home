@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider } from "@/contexts/mock-auth-context";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 

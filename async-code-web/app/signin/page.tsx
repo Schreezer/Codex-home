@@ -3,7 +3,7 @@
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { getSupabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/contexts/mock-auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

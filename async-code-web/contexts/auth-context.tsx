@@ -34,7 +34,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const supabase = getSupabase()
         
         // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data }: { data: { session: any } }) => {
+            const { session } = data;
             setSession(session)
             setUser(session?.user ?? null)
             setLoading(false)
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Listen for auth changes
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event, session) => {
+        } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
             setSession(session)
             setUser(session?.user ?? null)
             setLoading(false)

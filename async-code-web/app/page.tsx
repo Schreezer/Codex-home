@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ProtectedRoute } from "@/components/protected-route";
 import { TaskStatusBadge } from "@/components/task-status-badge";
 import { PRStatusBadge } from "@/components/pr-status-badge";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/mock-auth-context";
 import { ApiService } from "@/lib/api-service";
 import { SupabaseService } from "@/lib/supabase-service";
 import { Project, Task } from "@/types";

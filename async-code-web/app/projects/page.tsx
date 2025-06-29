@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ProtectedRoute } from "@/components/protected-route";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/mock-auth-context";
 import { ApiService } from "@/lib/api-service";
 import { Project } from "@/types";
 import { toast } from "sonner";

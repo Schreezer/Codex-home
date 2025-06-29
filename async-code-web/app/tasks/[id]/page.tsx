@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ProtectedRoute } from "@/components/protected-route";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/mock-auth-context";
 import { ApiService } from "@/lib/api-service";
 import { Task, Project, ChatMessage } from "@/types";
 import { formatDiff, parseDiffStats } from "@/lib/utils";

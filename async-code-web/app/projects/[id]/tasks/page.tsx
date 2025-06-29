@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedRoute } from "@/components/protected-route";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/mock-auth-context";
 import { ApiService } from "@/lib/api-service";
 import { Task, Project } from "@/types";
 
