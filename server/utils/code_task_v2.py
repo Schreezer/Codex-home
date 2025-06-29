@@ -8,6 +8,7 @@ import time
 import random
 from datetime import datetime
 from database import DatabaseOperations
+from .claude_oauth import ClaudeOAuthManager
 import fcntl
 
 # Configure logging
@@ -153,11 +154,96 @@ def _run_ai_code_task_v2_internal(task_id: int, user_id: str, github_token: str)
         if model_cli == 'claude':
             # Start with default Claude environment
             claude_env = {
-                'ANTHROPIC_API_KEY': os.getenv('ANTHROPIC_API_KEY'),
                 'ANTHROPIC_NONINTERACTIVE': '1'  # Custom flag for Anthropic tools
             }
-            # Merge with user's custom Claude environment variables
+            
+            # Determine authentication method: OAuth vs API Key
+            use_oauth = os.getenv('CLAUDE_USE_OAUTH', 'false').lower() == 'true'
             claude_config = user_preferences.get('claudeCode', {})
+            
+            # Check if user has OAuth tokens in preferences (overrides global setting)
+            user_oauth_tokens = claude_config.get('oauth', {}) if claude_config else {}
+            has_user_oauth = (
+                user_oauth_tokens.get('access_token') and 
+                user_oauth_tokens.get('refresh_token') and 
+                user_oauth_tokens.get('expires_at')
+            )
+            
+            if has_user_oauth or use_oauth:
+                logger.info(f"🔐 Using Claude OAuth authentication for task {task_id}")
+                
+                # Initialize OAuth manager and validate/refresh tokens
+                oauth_manager = ClaudeOAuthManager()
+                
+                if has_user_oauth:
+                    # Load from user preferences
+                    if oauth_manager.load_tokens_from_dict(user_oauth_tokens):
+                        # Check if tokens need refresh
+                        success, refreshed_tokens = oauth_manager.ensure_valid_token()
+                        if success and refreshed_tokens:
+                            # Update user preferences with new tokens
+                            logger.info(f"🔄 OAuth tokens refreshed for user {user_id}, updating preferences")
+                            try:
+                                updated_oauth = claude_config.copy() if claude_config else {}
+                                updated_oauth['oauth'] = refreshed_tokens
+                                updated_prefs = user_preferences.copy()
+                                updated_prefs['claudeCode'] = updated_oauth
+                                
+                                DatabaseOperations.update_user_preferences(user_id, updated_prefs)
+                                logger.info("✅ User preferences updated with refreshed OAuth tokens")
+                                
+                                # Use refreshed tokens
+                                user_oauth_tokens = refreshed_tokens
+                            except Exception as e:
+                                logger.warning(f"⚠️  Failed to update user preferences with refreshed tokens: {e}")
+                        elif not success:
+                            logger.error(f"❌ OAuth token refresh failed for user {user_id}")
+                            raise Exception("OAuth token refresh failed")
+                    else:
+                        logger.error(f"❌ Failed to load OAuth tokens from user preferences")
+                        raise Exception("Invalid OAuth tokens in user preferences")
+                        
+                    # Set environment variables with current (possibly refreshed) tokens
+                    claude_env.update({
+                        'CLAUDE_ACCESS_TOKEN': user_oauth_tokens['access_token'],
+                        'CLAUDE_REFRESH_TOKEN': user_oauth_tokens['refresh_token'],
+                        'CLAUDE_EXPIRES_AT': str(user_oauth_tokens['expires_at']),
+                        'CLAUDE_USE_OAUTH': '1'
+                    })
+                else:
+                    # Load from environment variables
+                    if oauth_manager.load_tokens_from_env():
+                        # Check if tokens need refresh
+                        success, refreshed_tokens = oauth_manager.ensure_valid_token()
+                        if success and refreshed_tokens:
+                            logger.info(f"🔄 OAuth tokens refreshed from environment for task {task_id}")
+                            # Use refreshed tokens
+                            claude_env.update({
+                                'CLAUDE_ACCESS_TOKEN': refreshed_tokens['access_token'],
+                                'CLAUDE_REFRESH_TOKEN': refreshed_tokens['refresh_token'],
+                                'CLAUDE_EXPIRES_AT': str(refreshed_tokens['expires_at']),
+                                'CLAUDE_USE_OAUTH': '1'
+                            })
+                        elif not success:
+                            logger.error(f"❌ OAuth token refresh failed for environment tokens")
+                            raise Exception("OAuth token refresh failed")
+                        else:
+                            # Tokens still valid, use original
+                            claude_env.update({
+                                'CLAUDE_ACCESS_TOKEN': os.getenv('CLAUDE_ACCESS_TOKEN'),
+                                'CLAUDE_REFRESH_TOKEN': os.getenv('CLAUDE_REFRESH_TOKEN'),
+                                'CLAUDE_EXPIRES_AT': os.getenv('CLAUDE_EXPIRES_AT'),
+                                'CLAUDE_USE_OAUTH': '1'
+                            })
+                    else:
+                        logger.error(f"❌ Failed to load OAuth tokens from environment")
+                        raise Exception("Invalid OAuth tokens in environment")
+            else:
+                logger.info(f"🔑 Using Claude API Key authentication for task {task_id}")
+                # Traditional API key authentication
+                claude_env['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY')
+            
+            # Merge with user's custom Claude environment variables
             if claude_config and claude_config.get('env'):
                 claude_env.update(claude_config['env'])
             env_vars.update(claude_env)
@@ -270,15 +356,43 @@ if [ "{model_cli}" = "claude" ]; then
     # Create ~/.claude directory if it doesn't exist
     mkdir -p ~/.claude
     
-    # Write credentials content directly to file
-    if [ ! -z '{escaped_credentials}' ]; then
-        echo "📋 Writing credentials to ~/.claude/.credentials.json"
-        cat << 'CREDENTIALS_EOF' > ~/.claude/.credentials.json
+    # Check if using OAuth or API key authentication
+    if [ "${{CLAUDE_USE_OAUTH:-0}}" = "1" ]; then
+        echo "🔐 Setting up Claude OAuth credentials..."
+        
+        # Create OAuth credentials file
+        if [ ! -z "${{CLAUDE_ACCESS_TOKEN:-}}" ] && [ ! -z "${{CLAUDE_REFRESH_TOKEN:-}}" ] && [ ! -z "${{CLAUDE_EXPIRES_AT:-}}" ]; then
+            echo "📋 Writing OAuth credentials to ~/.claude/.credentials.json"
+            cat << 'OAUTH_CREDENTIALS_EOF' > ~/.claude/.credentials.json
+{{
+  "access_token": "$CLAUDE_ACCESS_TOKEN",
+  "refresh_token": "$CLAUDE_REFRESH_TOKEN", 
+  "expires_at": $CLAUDE_EXPIRES_AT,
+  "token_type": "Bearer"
+}}
+OAUTH_CREDENTIALS_EOF
+            echo "✅ Claude OAuth credentials configured"
+        else
+            echo "❌ Missing OAuth tokens - CLAUDE_ACCESS_TOKEN, CLAUDE_REFRESH_TOKEN, or CLAUDE_EXPIRES_AT not set"
+            exit 1
+        fi
+    else
+        echo "🔑 Setting up Claude API Key credentials..."
+        
+        # Traditional credentials setup (if provided)
+        if [ ! -z '{escaped_credentials}' ]; then
+            echo "📋 Writing user credentials to ~/.claude/.credentials.json"
+            cat << 'CREDENTIALS_EOF' > ~/.claude/.credentials.json
 {credentials_content}
 CREDENTIALS_EOF
-        echo "✅ Claude credentials configured"
-    else
-        echo "⚠️  No credentials content available"
+            echo "✅ Claude user credentials configured"
+        elif [ ! -z "${{ANTHROPIC_API_KEY:-}}" ]; then
+            echo "📋 Using ANTHROPIC_API_KEY environment variable"
+            echo "✅ Claude API key configured via environment"
+        else
+            echo "❌ No Claude credentials available - neither user credentials nor API key set"
+            exit 1
+        fi
     fi
 fi
 

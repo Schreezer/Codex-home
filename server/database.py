@@ -227,3 +227,13 @@ class DatabaseOperations:
         except Exception as e:
             logger.error(f"Error getting user: {e}")
             return None
+    
+    @staticmethod
+    def update_user_preferences(user_id: str, preferences: Dict) -> bool:
+        """Update user preferences"""
+        try:
+            result = supabase.table('users').update({'preferences': preferences}).eq('id', user_id).execute()
+            return bool(result.data)
+        except Exception as e:
+            logger.error(f"Error updating user preferences: {e}")
+            return False
