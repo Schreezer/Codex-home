@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Save, Key, Settings2, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { SupabaseService } from "@/lib/supabase-service";
 import { useMockUserProfile } from "@/hooks/useMockUserProfile";
 
 interface CodeAgentConfig {
@@ -180,7 +181,17 @@ export function CodeAgentSettings() {
                 ...preferences,
             };
 
+            // Save to both localStorage (mock) and Supabase (real persistence)
             await updateProfile({ preferences: mergedPrefs });
+            
+            // Also save to Supabase for real persistence
+            try {
+                await SupabaseService.ensureMockUser('mock-user-chirag');
+                await SupabaseService.updateUserProfile({ preferences: mergedPrefs });
+            } catch (error) {
+                console.warn('Could not save to Supabase, using localStorage only:', error);
+            }
+            
             await refreshProfile();
             
             // Provide feedback about credentials handling

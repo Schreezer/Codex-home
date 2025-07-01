@@ -5,8 +5,37 @@ export class SupabaseService {
     private static get supabase() {
         return getSupabase()
     }
+
+    // Ensure mock user exists in database
+    static async ensureMockUser(userId: string = 'mock-user-chirag'): Promise<void> {
+        try {
+            const { data, error } = await this.supabase
+                .from('users')
+                .select('id')
+                .eq('id', userId)
+                .single()
+
+            if (error && error.code === 'PGRST116') {
+                // User doesn't exist, create it
+                const { error: insertError } = await this.supabase
+                    .from('users')
+                    .insert([{
+                        id: userId,
+                        email: 'chirag@narraite.xyz',
+                        name: 'Chirag',
+                        preferences: {}
+                    }])
+
+                if (insertError) {
+                    console.warn('Could not create mock user:', insertError)
+                }
+            }
+        } catch (error) {
+            console.warn('Error ensuring mock user exists:', error)
+        }
+    }
     // Project operations
-    static async getProjects(): Promise<ProjectWithStats[]> {
+    static async getProjects(userId: string = 'mock-user-chirag'): Promise<ProjectWithStats[]> {
         const { data, error } = await this.supabase
             .from('projects')
             .select(`
@@ -16,6 +45,7 @@ export class SupabaseService {
                     status
                 )
             `)
+            .eq('user_id', userId)
             .order('created_at', { ascending: false })
 
         if (error) throw error
@@ -36,14 +66,10 @@ export class SupabaseService {
         repo_name: string
         repo_owner: string
         settings?: any
-    }): Promise<Project> {
-        // Get current authenticated user
-        const { data: { user } } = await this.supabase.auth.getUser()
-        if (!user) throw new Error('No authenticated user')
-
+    }, userId: string = 'mock-user-chirag'): Promise<Project> {
         const { data, error } = await this.supabase
             .from('projects')
-            .insert([{ ...projectData, user_id: user.id }])
+            .insert([{ ...projectData, user_id: userId }])
             .select()
             .single()
 
@@ -90,11 +116,7 @@ export class SupabaseService {
     static async getTasks(projectId?: number, options?: {
         limit?: number
         offset?: number
-    }): Promise<Task[]> {
-        // Get current authenticated user
-        const { data: { user } } = await this.supabase.auth.getUser()
-        if (!user) throw new Error('No authenticated user')
-
+    }, userId: string = 'mock-user-chirag'): Promise<Task[]> {
         let query = this.supabase
             .from('tasks')
             .select(`
@@ -106,7 +128,7 @@ export class SupabaseService {
                     repo_owner
                 )
             `)
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
 
         if (projectId) {
             query = query.eq('project_id', projectId)
@@ -240,14 +262,11 @@ export class SupabaseService {
         github_username?: string
         github_token?: string
         preferences?: any
-    }) {
-        const { data: { user } } = await this.supabase.auth.getUser()
-        if (!user) throw new Error('No authenticated user')
-
+    }, userId: string = 'mock-user-chirag') {
         const { data, error } = await this.supabase
             .from('users')
             .update(updates)
-            .eq('id', user.id)
+            .eq('id', userId)
             .select()
             .single()
 

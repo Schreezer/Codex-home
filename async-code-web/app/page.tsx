@@ -19,7 +19,7 @@ import { TaskStatusBadge } from "@/components/task-status-badge";
 import { PRStatusBadge } from "@/components/pr-status-badge";
 import { useAuth } from "@/contexts/mock-auth-context";
 import { ApiService } from "@/lib/api-service";
-import { MockApiService } from "@/lib/mock-api-service";
+import { SupabaseService } from "@/lib/supabase-service";
 import { Project, Task } from "@/types";
 import { ClaudeIcon } from "@/components/icon/claude";
 import { OpenAIIcon } from "@/components/icon/openai";
@@ -86,10 +86,14 @@ export default function Home() {
         }
     }, [githubToken]);
 
-    // Initialize mock data
+    // Load real data from Supabase
     useEffect(() => {
         if (user?.id) {
-            MockApiService.seedSampleData();
+            // Ensure mock user exists in database, then load data
+            SupabaseService.ensureMockUser(user.id).then(() => {
+                loadProjects();
+                loadTasks();
+            });
         }
     }, [user?.id]);
 
@@ -103,7 +107,7 @@ export default function Home() {
         const interval = setInterval(async () => {
             try {
                 const updatedTasks = await Promise.all(
-                    runningTasks.map(task => MockApiService.getTask(task.id))
+                    runningTasks.map(task => SupabaseService.getTask(task.id))
                 );
 
                 setTasks(prevTasks => 
@@ -150,10 +154,10 @@ export default function Home() {
         if (!user?.id) return;
         
         try {
-            const taskData = await MockApiService.getTasks(undefined, {
+            const taskData = await SupabaseService.getTasks(undefined, {
                 limit: TASKS_PER_PAGE,
                 offset: 0
-            });
+            }, user.id);
             
             if (reset) {
                 setTasks(taskData);
@@ -171,10 +175,10 @@ export default function Home() {
         try {
             setIsLoadingMore(true);
             const nextPage = taskPage + 1;
-            const taskData = await MockApiService.getTasks(undefined, {
+            const taskData = await SupabaseService.getTasks(undefined, {
                 limit: TASKS_PER_PAGE,
                 offset: nextPage * TASKS_PER_PAGE
-            });
+            }, user.id);
             
             if (taskData.length > 0) {
                 setTasks(prev => [...prev, ...taskData]);
