@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Save, Key, Settings2, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { SupabaseService } from "@/lib/supabase-service";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import { useMockUserProfile } from "@/hooks/useMockUserProfile";
 
 interface CodeAgentConfig {
     claudeCode?: {
@@ -63,7 +62,7 @@ const hasMeaningfulCredentials = (creds: any): boolean => {
 };
 
 export function CodeAgentSettings() {
-    const { profile, refreshProfile } = useUserProfile();
+    const { profile, refreshProfile, updateProfile } = useMockUserProfile();
     const [claudeEnv, setClaudeEnv] = useState("");
     const [claudeCredentials, setClaudeCredentials] = useState("");
     const [claudeOAuth, setClaudeOAuth] = useState("");
@@ -181,7 +180,7 @@ export function CodeAgentSettings() {
                 ...preferences,
             };
 
-            await SupabaseService.updateUserProfile({ preferences: mergedPrefs });
+            await updateProfile({ preferences: mergedPrefs });
             await refreshProfile();
             
             // Provide feedback about credentials handling
