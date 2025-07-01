@@ -1,0 +1,71 @@
+{
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "partial": 2
+  },
+  "tests": [
+    {
+      "test": "Initial Navigation",
+      "status": "PASS",
+      "details": "Successfully loaded https://claudegod.narraite.xyz",
+      "screenshot": "1751333454289-initial-load.png",
+      "timestamp": "2025-07-01T01:30:54.686Z"
+    },
+    {
+      "test": "Authentication Flow",
+      "status": "PASS",
+      "details": "Successfully logged in with SimpleAuth",
+      "screenshot": "1751333458034-dashboard-after-login.png",
+      "timestamp": "2025-07-01T01:30:58.268Z"
+    },
+    {
+      "test": "Settings OAuth Configuration",
+      "status": "FAIL",
+      "details": "OAuth configuration fields not found on settings page",
+      "screenshot": null,
+      "timestamp": "2025-07-01T01:31:00.584Z"
+    },
+    {
+      "test": "Mobile Responsiveness",
+      "status": "PARTIAL",
+      "details": "Mobile viewport set but hamburger menu not clearly identified",
+      "screenshot": "1751333461615-mobile-viewport.png",
+      "timestamp": "2025-07-01T01:31:01.908Z"
+    },
+    {
+      "test": "Database Integration",
+      "status": "FAIL",
+      "details": "Error accessing projects page: page.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href*=\"projects\"], a:has-text(\"Projects\")')\u001b[22m\n",
+      "screenshot": null,
+      "timestamp": "2025-07-01T01:31:31.942Z"
+    },
+    {
+      "test": "General Functionality",
+      "status": "PARTIAL",
+      "details": "Navigation working (1 links tested), logout button not found",
+      "screenshot": null,
+      "timestamp": "2025-07-01T01:31:33.002Z"
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "Error loading projects: Error: Failed to fetch projects\n    at i.getProjects (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:39306)\n    at async ev (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:18005)",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Error loading tasks: {code: PGRST200, details: Searched for a foreign key relationship between 't…n the schema 'public', but no matches were found., hint: null, message: Could not find a relationship between 'tasks' and 'projects' in the schema cache}",
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "Error loading projects: Error: Failed to fetch projects\n    at i.getProjects (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:39306)\n    at async ev (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:18005)",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Error loading tasks: {code: PGRST200, details: Searched for a foreign key relationship between 't…n the schema 'public', but no matches were found., hint: null, message: Could not find a relationship between 'tasks' and 'projects' in the schema cache}",
+    "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "Error loading projects: Error: Failed to fetch projects\n    at i.getProjects (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:39306)\n    at async ev (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:18005)",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Error loading tasks: {code: PGRST200, details: Searched for a foreign key relationship between 't…n the schema 'public', but no matches were found., hint: null, message: Could not find a relationship between 'tasks' and 'projects' in the schema cache}",
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+    "Error loading projects: Error: Failed to fetch projects\n    at i.getProjects (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:39306)\n    at async ev (https://claudegod.narraite.xyz/_next/static/chunks/app/page-fbc88bc3b8d31cd8.js:1:18005)",
+    "Failed to load resource: the server responded with a status of 400 ()",
+    "Error loading tasks: {code: PGRST200, details: Searched for a foreign key relationship between 't…n the schema 'public', but no matches were found., hint: null, message: Could not find a relationship between 'tasks' and 'projects' in the schema cache}"
+  ]
+}

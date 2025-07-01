@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 
-// Mock user profile for SimpleAuth
+// Mock user profile for SimpleAuth (using proper UUID)
 const MOCK_USER = {
-    id: 'mock-user-chirag',
+    id: '00000000-0000-0000-0000-000000000001',
     email: 'chirag@narraite.xyz',
     name: 'Chirag',
     preferences: {} as Record<string, any>

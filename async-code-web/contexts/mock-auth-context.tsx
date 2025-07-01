@@ -29,9 +29,9 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    // Mock user for demonstration
+    // Mock user for demonstration (using proper UUID)
     const mockUser: User = {
-        id: 'mock-user-1',
+        id: '00000000-0000-0000-0000-000000000001',
         email: 'chirag@narraite.xyz'
     }
 

@@ -186,7 +186,7 @@ export function CodeAgentSettings() {
             
             // Also save to Supabase for real persistence
             try {
-                await SupabaseService.ensureMockUser('mock-user-chirag');
+                await SupabaseService.ensureMockUser('00000000-0000-0000-0000-000000000001');
                 await SupabaseService.updateUserProfile({ preferences: mergedPrefs });
             } catch (error) {
                 console.warn('Could not save to Supabase, using localStorage only:', error);

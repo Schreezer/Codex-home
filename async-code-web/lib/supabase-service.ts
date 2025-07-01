@@ -7,7 +7,7 @@ export class SupabaseService {
     }
 
     // Ensure mock user exists in database
-    static async ensureMockUser(userId: string = 'mock-user-chirag'): Promise<void> {
+    static async ensureMockUser(userId: string = '00000000-0000-0000-0000-000000000001'): Promise<void> {
         try {
             const { data, error } = await this.supabase
                 .from('users')
@@ -35,7 +35,7 @@ export class SupabaseService {
         }
     }
     // Project operations
-    static async getProjects(userId: string = 'mock-user-chirag'): Promise<ProjectWithStats[]> {
+    static async getProjects(userId: string = '00000000-0000-0000-0000-000000000001'): Promise<ProjectWithStats[]> {
         const { data, error } = await this.supabase
             .from('projects')
             .select(`
@@ -66,7 +66,7 @@ export class SupabaseService {
         repo_name: string
         repo_owner: string
         settings?: any
-    }, userId: string = 'mock-user-chirag'): Promise<Project> {
+    }, userId: string = '00000000-0000-0000-0000-000000000001'): Promise<Project> {
         const { data, error } = await this.supabase
             .from('projects')
             .insert([{ ...projectData, user_id: userId }])
@@ -116,7 +116,7 @@ export class SupabaseService {
     static async getTasks(projectId?: number, options?: {
         limit?: number
         offset?: number
-    }, userId: string = 'mock-user-chirag'): Promise<Task[]> {
+    }, userId: string = '00000000-0000-0000-0000-000000000001'): Promise<Task[]> {
         let query = this.supabase
             .from('tasks')
             .select(`
@@ -262,7 +262,7 @@ export class SupabaseService {
         github_username?: string
         github_token?: string
         preferences?: any
-    }, userId: string = 'mock-user-chirag') {
+    }, userId: string = '00000000-0000-0000-0000-000000000001') {
         const { data, error } = await this.supabase
             .from('users')
             .update(updates)
