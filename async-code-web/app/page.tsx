@@ -19,7 +19,7 @@ import { TaskStatusBadge } from "@/components/task-status-badge";
 import { PRStatusBadge } from "@/components/pr-status-badge";
 import { useAuth } from "@/contexts/mock-auth-context";
 import { ApiService } from "@/lib/api-service";
-import { SupabaseService } from "@/lib/supabase-service";
+import { MockApiService } from "@/lib/mock-api-service";
 import { Project, Task } from "@/types";
 import { ClaudeIcon } from "@/components/icon/claude";
 import { OpenAIIcon } from "@/components/icon/openai";
@@ -86,6 +86,13 @@ export default function Home() {
         }
     }, [githubToken]);
 
+    // Initialize mock data
+    useEffect(() => {
+        if (user?.id) {
+            MockApiService.seedSampleData();
+        }
+    }, [user?.id]);
+
     // Poll task status for running tasks
     useEffect(() => {
         if (!user?.id) return;
@@ -96,7 +103,7 @@ export default function Home() {
         const interval = setInterval(async () => {
             try {
                 const updatedTasks = await Promise.all(
-                    runningTasks.map(task => SupabaseService.getTask(task.id))
+                    runningTasks.map(task => MockApiService.getTask(task.id))
                 );
 
                 setTasks(prevTasks => 
@@ -143,7 +150,7 @@ export default function Home() {
         if (!user?.id) return;
         
         try {
-            const taskData = await SupabaseService.getTasks(undefined, {
+            const taskData = await MockApiService.getTasks(undefined, {
                 limit: TASKS_PER_PAGE,
                 offset: 0
             });
@@ -164,7 +171,7 @@ export default function Home() {
         try {
             setIsLoadingMore(true);
             const nextPage = taskPage + 1;
-            const taskData = await SupabaseService.getTasks(undefined, {
+            const taskData = await MockApiService.getTasks(undefined, {
                 limit: TASKS_PER_PAGE,
                 offset: nextPage * TASKS_PER_PAGE
             });
