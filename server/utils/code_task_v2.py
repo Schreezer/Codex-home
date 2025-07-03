@@ -163,13 +163,16 @@ def _run_ai_code_task_v2_internal(task_id: int, user_id: str, github_token: str)
             
             # Check if user has OAuth tokens in preferences (overrides global setting)
             user_oauth_tokens = claude_config.get('oauth', {}) if claude_config else {}
+            user_use_oauth = claude_config.get('useOAuth', False) if claude_config else False
             has_user_oauth = (
                 user_oauth_tokens.get('access_token') and 
                 user_oauth_tokens.get('refresh_token') and 
                 user_oauth_tokens.get('expires_at')
             )
             
-            if has_user_oauth or use_oauth:
+            logger.info(f"🔍 OAuth Config Debug - user_use_oauth: {user_use_oauth}, has_user_oauth: {has_user_oauth}")
+            
+            if (user_use_oauth and has_user_oauth) or use_oauth:
                 logger.info(f"🔐 Using Claude OAuth authentication for task {task_id}")
                 
                 # Initialize OAuth manager and validate/refresh tokens
@@ -177,6 +180,7 @@ def _run_ai_code_task_v2_internal(task_id: int, user_id: str, github_token: str)
                 
                 if has_user_oauth:
                     # Load from user preferences
+                    logger.info(f"🔍 Loading OAuth tokens from user preferences: {list(user_oauth_tokens.keys())}")
                     if oauth_manager.load_tokens_from_dict(user_oauth_tokens):
                         # Check if tokens need refresh
                         success, refreshed_tokens = oauth_manager.ensure_valid_token()
@@ -204,12 +208,14 @@ def _run_ai_code_task_v2_internal(task_id: int, user_id: str, github_token: str)
                         raise Exception("Invalid OAuth tokens in user preferences")
                         
                     # Set environment variables with current (possibly refreshed) tokens
+                    logger.info(f"🔍 Setting OAuth environment variables for container")
                     claude_env.update({
                         'CLAUDE_ACCESS_TOKEN': user_oauth_tokens['access_token'],
                         'CLAUDE_REFRESH_TOKEN': user_oauth_tokens['refresh_token'],
                         'CLAUDE_EXPIRES_AT': str(user_oauth_tokens['expires_at']),
                         'CLAUDE_USE_OAUTH': '1'
                     })
+                    logger.info(f"🔍 OAuth env vars set - access_token: {user_oauth_tokens['access_token'][:20]}..., expires_at: {user_oauth_tokens['expires_at']}")
                 else:
                     # Load from environment variables
                     if oauth_manager.load_tokens_from_env():
@@ -383,7 +389,7 @@ if [ "{model_cli}" = "claude" ]; then
         # Create OAuth credentials file
         if [ ! -z "${{CLAUDE_ACCESS_TOKEN:-}}" ] && [ ! -z "${{CLAUDE_REFRESH_TOKEN:-}}" ] && [ ! -z "${{CLAUDE_EXPIRES_AT:-}}" ]; then
             echo "📋 Writing OAuth credentials to ~/.claude/.credentials.json"
-            cat << 'OAUTH_CREDENTIALS_EOF' > ~/.claude/.credentials.json
+            cat << OAUTH_CREDENTIALS_EOF > ~/.claude/.credentials.json
 {{
   "access_token": "$CLAUDE_ACCESS_TOKEN",
   "refresh_token": "$CLAUDE_REFRESH_TOKEN", 
@@ -392,8 +398,14 @@ if [ "{model_cli}" = "claude" ]; then
 }}
 OAUTH_CREDENTIALS_EOF
             echo "✅ Claude OAuth credentials configured"
+            echo "🔍 Debug - checking credentials file:"
+            cat ~/.claude/.credentials.json
         else
             echo "❌ Missing OAuth tokens - CLAUDE_ACCESS_TOKEN, CLAUDE_REFRESH_TOKEN, or CLAUDE_EXPIRES_AT not set"
+            echo "🔍 Debug - Environment variables:"
+            echo "CLAUDE_ACCESS_TOKEN: ${{CLAUDE_ACCESS_TOKEN:-'NOT_SET'}}"
+            echo "CLAUDE_REFRESH_TOKEN: ${{CLAUDE_REFRESH_TOKEN:-'NOT_SET'}}"
+            echo "CLAUDE_EXPIRES_AT: ${{CLAUDE_EXPIRES_AT:-'NOT_SET'}}"
             exit 1
         fi
     else
