@@ -78,16 +78,21 @@ class ClaudeOAuthManager:
             logger.warning("⚠️  No expiration time available, assuming expired")
             return True
             
+        # Convert milliseconds to seconds if needed (13+ digits indicates milliseconds)
+        expires_timestamp = self.expires_at
+        if expires_timestamp > 9999999999:  # More than 10 digits, likely milliseconds
+            expires_timestamp = expires_timestamp / 1000
+            
         current_time = int(time.time())
-        expires_with_buffer = self.expires_at - buffer_seconds
+        expires_with_buffer = expires_timestamp - buffer_seconds
         
         is_expired = current_time >= expires_with_buffer
         
         if is_expired:
-            expires_dt = datetime.fromtimestamp(self.expires_at)
+            expires_dt = datetime.fromtimestamp(expires_timestamp)
             logger.warning(f"⏰ Token expired or will expire soon. Expires: {expires_dt}")
         else:
-            expires_dt = datetime.fromtimestamp(self.expires_at)
+            expires_dt = datetime.fromtimestamp(expires_timestamp)
             time_left = expires_with_buffer - current_time
             logger.info(f"✅ Token valid. Expires: {expires_dt} ({time_left}s remaining)")
             
@@ -151,7 +156,11 @@ class ClaudeOAuthManager:
                     'token_type': 'Bearer'
                 }
                 
-                expires_dt = datetime.fromtimestamp(new_expires_at)
+                # Handle timestamp conversion safely
+                display_timestamp = new_expires_at
+                if display_timestamp > 9999999999:  # Milliseconds
+                    display_timestamp = display_timestamp / 1000
+                expires_dt = datetime.fromtimestamp(display_timestamp)
                 logger.info(f"✅ Successfully refreshed Claude OAuth token. New expiration: {expires_dt}")
                 
                 return True, new_tokens
