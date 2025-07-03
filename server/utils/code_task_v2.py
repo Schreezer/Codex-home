@@ -263,11 +263,8 @@ def _run_ai_code_task_v2_internal(task_id: int, user_id: str, github_token: str)
                 codex_env.update(codex_config['env'])
             env_vars.update(codex_env)
         
-        # Use specialized container images based on model
-        if model_cli == 'codex':
-            container_image = 'codex-automation:latest'
-        else:
-            container_image = 'claude-code-automation:latest'
+        # Use standard Ubuntu image and install CLI tools at runtime
+        container_image = 'ubuntu:22.04'
         
         # Add staggered start to prevent race conditions with parallel Codex tasks
         if model_cli == 'codex':
@@ -327,6 +324,29 @@ def _run_ai_code_task_v2_internal(task_id: int, user_id: str, github_token: str)
         # Create the command to run in container (v2 function)
         container_command = f'''
 set -e
+echo "Setting up environment..."
+
+# Update package list and install essential tools
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y curl git wget gpg software-properties-common ca-certificates
+
+# Install Node.js (required for Claude Code CLI)
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt-get install -y nodejs
+
+# Install Claude Code CLI
+echo "Installing Claude Code CLI..."
+npm install -g @anthropic-ai/claude-code
+
+# Verify installation
+echo "Verifying Claude Code CLI installation..."
+claude --version || echo "Claude CLI version check failed, but continuing..."
+
+# Create workspace directory
+mkdir -p /workspace
+cd /workspace
+
 echo "Setting up repository..."
 
 # Clone repository with authentication
@@ -459,112 +479,27 @@ if [ "{model_cli}" = "codex" ]; then
     fi
     
 else
-    echo "Using Claude CLI..."
+    echo "Using Claude Code CLI..."
     
-    # Try different ways to invoke claude
-    echo "Checking claude installation..."
-
-if [ -f /usr/local/bin/claude ]; then
-    echo "Found claude at /usr/local/bin/claude"
-    echo "File type:"
-    file /usr/local/bin/claude || echo "file command not available"
-    echo "First few lines:"
-    head -5 /usr/local/bin/claude || echo "head command failed"
+    # Use the official Claude Code CLI with proper non-interactive mode
+    echo "Running Claude Code in non-interactive mode..."
     
-    # Check if it's a shell script
-    if head -1 /usr/local/bin/claude | grep -q "#!/bin/sh\|#!/bin/bash\|#!/usr/bin/env bash"; then
-        echo "Detected shell script, running with sh..."
-        sh /usr/local/bin/claude < /tmp/prompt.txt
-    # Check if it's a Node.js script (including env -S node pattern)
-    elif head -1 /usr/local/bin/claude | grep -q "#!/usr/bin/env.*node\|#!/usr/bin/node"; then
-        echo "Detected Node.js script..."
-        if command -v node >/dev/null 2>&1; then
-            echo "Running with node..."
-            # Try different approaches for Claude CLI
-            
-            # First try with --help to see available options
-            echo "Checking claude options..."
-            node /usr/local/bin/claude --help 2>/dev/null || echo "Help not available"
-            
-            # Try non-interactive approaches
-            echo "Attempting non-interactive execution..."
-            
-            # Method 1: Use the official --print flag for non-interactive mode
-            echo "Using --print flag for non-interactive mode..."
-            cat /tmp/prompt.txt | node /usr/local/bin/claude --print --allowedTools "Edit,Bash"
-            CLAUDE_EXIT_CODE=$?
-            echo "Claude Code finished with exit code: $CLAUDE_EXIT_CODE"
-            
-            if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
-                echo "ERROR: Claude Code failed with exit code $CLAUDE_EXIT_CODE"
-                exit $CLAUDE_EXIT_CODE
-            fi
-            
-            echo "✅ Claude Code completed successfully"
-        else
-            echo "Node.js not found, trying direct execution..."
-            /usr/local/bin/claude < /tmp/prompt.txt
-            CLAUDE_EXIT_CODE=$?
-            echo "Claude Code finished with exit code: $CLAUDE_EXIT_CODE"
-            if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
-                echo "ERROR: Claude Code failed with exit code $CLAUDE_EXIT_CODE"
-                exit $CLAUDE_EXIT_CODE
-            fi
-            echo "✅ Claude Code completed successfully"
-        fi
-    # Check if it's a Python script
-    elif head -1 /usr/local/bin/claude | grep -q "#!/usr/bin/env python\|#!/usr/bin/python"; then
-        echo "Detected Python script..."
-        if command -v python3 >/dev/null 2>&1; then
-            echo "Running with python3..."
-            python3 /usr/local/bin/claude < /tmp/prompt.txt
-            CLAUDE_EXIT_CODE=$?
-        elif command -v python >/dev/null 2>&1; then
-            echo "Running with python..."
-            python /usr/local/bin/claude < /tmp/prompt.txt
-            CLAUDE_EXIT_CODE=$?
-        else
-            echo "Python not found, trying direct execution..."
-            /usr/local/bin/claude < /tmp/prompt.txt
-            CLAUDE_EXIT_CODE=$?
-        fi
-        echo "Claude Code finished with exit code: $CLAUDE_EXIT_CODE"
-        if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
-            echo "ERROR: Claude Code failed with exit code $CLAUDE_EXIT_CODE"
-            exit $CLAUDE_EXIT_CODE
-        fi
-        echo "✅ Claude Code completed successfully"
-    else
-        echo "Unknown script type, trying direct execution..."
-        /usr/local/bin/claude < /tmp/prompt.txt
-        CLAUDE_EXIT_CODE=$?
-        echo "Claude Code finished with exit code: $CLAUDE_EXIT_CODE"
-        if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
-            echo "ERROR: Claude Code failed with exit code $CLAUDE_EXIT_CODE"
-            exit $CLAUDE_EXIT_CODE
-        fi
-        echo "✅ Claude Code completed successfully"
-    fi
-elif command -v claude >/dev/null 2>&1; then
-    echo "Using claude from PATH..."
-    CLAUDE_PATH=$(which claude)
-    echo "Claude found at: $CLAUDE_PATH"
-    claude < /tmp/prompt.txt
+    # Read the prompt from file
+    PROMPT_TEXT=$(cat /tmp/prompt.txt)
+    
+    # Run Claude Code with the prompt
+    echo "Executing: claude '$PROMPT_TEXT'"
+    claude "$PROMPT_TEXT"
     CLAUDE_EXIT_CODE=$?
+    
     echo "Claude Code finished with exit code: $CLAUDE_EXIT_CODE"
+    
     if [ $CLAUDE_EXIT_CODE -ne 0 ]; then
         echo "ERROR: Claude Code failed with exit code $CLAUDE_EXIT_CODE"
         exit $CLAUDE_EXIT_CODE
     fi
+    
     echo "✅ Claude Code completed successfully"
-else
-    echo "ERROR: claude command not found anywhere"
-    echo "Checking available interpreters:"
-    which python3 2>/dev/null && echo "python3: available" || echo "python3: not found"
-    which python 2>/dev/null && echo "python: available" || echo "python: not found"
-    which node 2>/dev/null && echo "node: available" || echo "node: not found"
-    which sh 2>/dev/null && echo "sh: available" || echo "sh: not found"
-    exit 1
 fi
 
 fi  # End of model selection (claude vs codex)
