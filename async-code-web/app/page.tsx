@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Github, GitBranch, Code2, ExternalLink, CheckCircle, Clock, XCircle, AlertCircle, FileText, Eye, GitCommit, Bell, Settings, LogOut, User, FolderGit2, Plus } from "lucide-react";
+import { Github, GitBranch, Code2, ExternalLink, CheckCircle, Clock, XCircle, AlertCircle, FileText, Eye, GitCommit, Bell, Settings, LogOut, User, FolderGit2, Plus, RefreshCw, Lock } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,9 @@ export default function Home() {
     const [model, setModel] = useState("claude");
     const [tasks, setTasks] = useState<TaskWithProject[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
+    const [githubRepos, setGithubRepos] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingRepos, setIsLoadingRepos] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -150,6 +152,25 @@ export default function Home() {
         }
     };
 
+    const loadGitHubRepositories = async () => {
+        if (!githubToken.trim()) {
+            toast.error('Please configure your GitHub token in Settings first');
+            return;
+        }
+
+        setIsLoadingRepos(true);
+        try {
+            const data = await ApiService.fetchGitHubRepositories(githubToken);
+            setGithubRepos(data.repositories);
+            toast.success(`Loaded ${data.total_count} GitHub repositories`);
+        } catch (error) {
+            console.error('Error fetching GitHub repositories:', error);
+            toast.error(`Failed to fetch GitHub repositories: ${error}`);
+        } finally {
+            setIsLoadingRepos(false);
+        }
+    };
+
     const loadTasks = async (reset: boolean = true) => {
         if (!user?.id) return;
         
@@ -208,15 +229,24 @@ export default function Home() {
         let repoUrl = "";
         let projectId = undefined;
 
-        if (selectedProject && selectedProject !== "custom") {
-            const project = projects.find(p => p.id.toString() === selectedProject);
+        if (selectedProject.startsWith("project-")) {
+            // Using an existing project
+            const projectIdStr = selectedProject.replace("project-", "");
+            const project = projects.find(p => p.id.toString() === projectIdStr);
             if (project) {
                 repoUrl = project.repo_url;
                 projectId = project.id;
             }
+        } else if (selectedProject.startsWith("repo-")) {
+            // Using a GitHub repository
+            const repoIdStr = selectedProject.replace("repo-", "");
+            const repo = githubRepos.find(r => r.id.toString() === repoIdStr);
+            if (repo) {
+                repoUrl = repo.html_url;
+                // We could optionally create a project for this repo
+            }
         } else {
-            // Custom repo URL - would need an input field for this
-            toast.error('Custom repo URL input not implemented yet. Please select a project or create one first.');
+            toast.error('Please select a repository from the dropdown.');
             return;
         }
 
@@ -456,34 +486,104 @@ export default function Home() {
                                     <div className="space-y-2">
                                         <Label htmlFor="project" className="flex items-center gap-2">
                                             <FolderGit2 className="w-3 h-3" />
-                                            Project
+                                            Project / Repository
                                         </Label>
-                                        <Select value={selectedProject} onValueChange={setSelectedProject}>
-                                            <SelectTrigger id="project" className="w-full">
-                                                <SelectValue placeholder="Select a project" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {projects.map((project) => (
-                                                    <SelectItem key={project.id} value={project.id.toString()}>
-                                                        <div className="flex items-center gap-2 min-w-0">
-                                                            <Github className="w-3 h-3 flex-shrink-0" />
-                                                            <span className="truncate">{project.name}</span>
-                                                            <span className="text-slate-500 text-xs flex-shrink-0">
-                                                                ({project.repo_owner}/{project.repo_name})
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
-                                                <SelectItem value="custom">Custom Repository URL</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {projects.length === 0 && (
-                                            <p className="text-sm text-slate-500">
-                                                No projects found.{" "}
-                                                <Link href="/projects" className="text-blue-600 hover:underline">
-                                                    Create a project first
-                                                </Link>
-                                            </p>
+                                        <div className="flex gap-2">
+                                            <Select value={selectedProject} onValueChange={setSelectedProject}>
+                                                <SelectTrigger id="project" className="flex-1">
+                                                    <SelectValue placeholder="Select a repository" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {/* Existing Projects */}
+                                                    {projects.length > 0 && (
+                                                        <>
+                                                            <div className="px-2 py-1.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                                Saved Projects
+                                                            </div>
+                                                            {projects.map((project) => (
+                                                                <SelectItem key={`project-${project.id}`} value={`project-${project.id}`}>
+                                                                    <div className="flex items-center gap-2 min-w-0">
+                                                                        <FolderGit2 className="w-3 h-3 flex-shrink-0 text-blue-600" />
+                                                                        <span className="truncate">{project.name}</span>
+                                                                        <span className="text-slate-500 text-xs flex-shrink-0">
+                                                                            ({project.repo_owner}/{project.repo_name})
+                                                                        </span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                            <div className="h-px bg-slate-200 my-1" />
+                                                        </>
+                                                    )}
+                                                    
+                                                    {/* GitHub Repositories */}
+                                                    {githubRepos.length > 0 && (
+                                                        <>
+                                                            <div className="px-2 py-1.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                                GitHub Repositories
+                                                            </div>
+                                                            {githubRepos.slice(0, 20).map((repo) => (
+                                                                <SelectItem key={`repo-${repo.id}`} value={`repo-${repo.id}`}>
+                                                                    <div className="flex items-center gap-2 min-w-0">
+                                                                        <Github className="w-3 h-3 flex-shrink-0 text-gray-600" />
+                                                                        <span className="truncate">{repo.name}</span>
+                                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                                            {repo.private && <Lock className="w-2 h-2 text-amber-600" />}
+                                                                            {repo.language && (
+                                                                                <span className="text-slate-500 text-xs">
+                                                                                    {repo.language}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                            {githubRepos.length > 20 && (
+                                                                <div className="px-2 py-1 text-xs text-slate-500">
+                                                                    ... and {githubRepos.length - 20} more repositories
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={loadGitHubRepositories}
+                                                disabled={isLoadingRepos || !githubToken.trim()}
+                                                title="Load GitHub repositories"
+                                            >
+                                                {isLoadingRepos ? (
+                                                    <div className="animate-spin">
+                                                        <RefreshCw className="w-4 h-4" />
+                                                    </div>
+                                                ) : (
+                                                    <RefreshCw className="w-4 h-4" />
+                                                )}
+                                            </Button>
+                                        </div>
+                                        {projects.length === 0 && githubRepos.length === 0 && (
+                                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
+                                                <div className="text-sm text-slate-600">
+                                                    {!githubToken.trim() ? (
+                                                        <>
+                                                            Configure your GitHub token in{" "}
+                                                            <Link href="/settings" className="text-blue-600 hover:underline">
+                                                                Settings
+                                                            </Link>{" "}
+                                                            to load your repositories.
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            Click the refresh button to load your GitHub repositories, or{" "}
+                                                            <Link href="/projects" className="text-blue-600 hover:underline">
+                                                                create a project
+                                                            </Link>.
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
 

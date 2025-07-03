@@ -741,3 +741,66 @@ def auth_status():
             'authenticated': False,
             'error': str(e)
         }), 500
+
+@tasks_bp.route('/github/repos', methods=['POST'])
+def fetch_github_repos():
+    """Fetch GitHub repositories for the user"""
+    try:
+        data = request.get_json()
+        github_token = data.get('github_token')
+        
+        if not github_token:
+            return jsonify({'error': 'github_token is required'}), 400
+        
+        # Create GitHub client
+        g = Github(github_token)
+        
+        # Get authenticated user's repositories
+        user = g.get_user()
+        repos = []
+        
+        # Fetch user's repositories (both owned and accessible)
+        for repo in user.get_repos():
+            # Include both public and private repos the user has access to
+            repo_data = {
+                'id': repo.id,
+                'name': repo.name,
+                'full_name': repo.full_name,
+                'description': repo.description,
+                'private': repo.private,
+                'fork': repo.fork,
+                'created_at': repo.created_at.isoformat() if repo.created_at else None,
+                'updated_at': repo.updated_at.isoformat() if repo.updated_at else None,
+                'pushed_at': repo.pushed_at.isoformat() if repo.pushed_at else None,
+                'clone_url': repo.clone_url,
+                'ssh_url': repo.ssh_url,
+                'html_url': repo.html_url,
+                'default_branch': repo.default_branch,
+                'language': repo.language,
+                'stargazers_count': repo.stargazers_count,
+                'forks_count': repo.forks_count,
+                'open_issues_count': repo.open_issues_count,
+                'size': repo.size,
+                'permissions': {
+                    'admin': repo.permissions.admin,
+                    'push': repo.permissions.push,
+                    'pull': repo.permissions.pull
+                }
+            }
+            repos.append(repo_data)
+        
+        # Sort by updated_at (most recently updated first)
+        repos.sort(key=lambda x: x['updated_at'] or '', reverse=True)
+        
+        logger.info(f"📦 Fetched {len(repos)} repositories for user {user.login}")
+        
+        return jsonify({
+            'status': 'success',
+            'user': user.login,
+            'repositories': repos,
+            'total_count': len(repos)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching GitHub repositories: {str(e)}")
+        return jsonify({'error': f'Failed to fetch repositories: {str(e)}'}), 401

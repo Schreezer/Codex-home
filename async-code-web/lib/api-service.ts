@@ -231,6 +231,29 @@ export class ApiService {
         return data
     }
 
+    static async fetchGitHubRepositories(token: string): Promise<{
+        user: string
+        repositories: any[]
+        total_count: number
+    }> {
+        const response = await fetch(`${API_BASE}/github/repos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                github_token: token
+            })
+        })
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch GitHub repositories')
+        }
+        
+        const data = await response.json()
+        return data
+    }
+
     static async getGitDiff(userId: string, taskId: number): Promise<string> {
         const response = await fetch(`${API_BASE}/git-diff/${taskId}`, {
             headers: getUserIdHeader(userId)
