@@ -705,3 +705,39 @@ def apply_diff_to_content(original_content, diff_lines, filename):
     except Exception as e:
         logger.error(f"❌ Error applying diff to {filename}: {str(e)}")
         return None
+
+@tasks_bp.route('/auth/status', methods=['GET'])
+def auth_status():
+    """Check authentication status for the user"""
+    try:
+        user_id = request.headers.get('X-User-ID')
+        
+        if not user_id:
+            return jsonify({
+                'authenticated': False,
+                'user_id': None,
+                'message': 'No user ID provided'
+            }), 401
+        
+        # For now, just verify the user ID format (mock auth)
+        if user_id == '00000000-0000-0000-0000-000000000001':
+            return jsonify({
+                'authenticated': True,
+                'user_id': user_id,
+                'email': 'chirag@narraite.xyz',
+                'auth_type': 'mock',
+                'message': 'Mock authentication active'
+            })
+        else:
+            return jsonify({
+                'authenticated': False,
+                'user_id': user_id,
+                'message': 'Invalid user ID'
+            }), 401
+        
+    except Exception as e:
+        logger.error(f"Auth status error: {str(e)}")
+        return jsonify({
+            'authenticated': False,
+            'error': str(e)
+        }), 500
