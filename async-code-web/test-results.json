@@ -1,0 +1,163 @@
+{
+  "timestamp": "2025-07-02T06:25:31.585Z",
+  "tests": [
+    {
+      "name": "Application Load",
+      "status": "PASS",
+      "details": "Application loaded successfully in 2275ms",
+      "loadTime": 2275
+    },
+    {
+      "name": "Login Form Elements",
+      "status": "PASS",
+      "details": "Username, password fields and submit button found"
+    },
+    {
+      "name": "Login Functionality",
+      "status": "PASS",
+      "details": "Login attempted successfully, page loaded"
+    },
+    {
+      "name": "Dashboard Interface",
+      "status": "PASS",
+      "details": "Dashboard elements found: button, .btn, [role=\"button\"]: 1 elements"
+    },
+    {
+      "name": "Mobile Responsiveness",
+      "status": "PASS",
+      "details": "Tested 4 viewports",
+      "responsiveResults": [
+        {
+          "viewport": "Mobile Portrait",
+          "size": "375x667",
+          "horizontalScroll": false
+        },
+        {
+          "viewport": "Mobile Landscape",
+          "size": "667x375",
+          "horizontalScroll": false
+        },
+        {
+          "viewport": "Tablet",
+          "size": "768x1024",
+          "horizontalScroll": false
+        },
+        {
+          "viewport": "Desktop",
+          "size": "1920x1080",
+          "horizontalScroll": false
+        }
+      ]
+    },
+    {
+      "name": "Navigation and Core Functionality",
+      "status": "PASS",
+      "details": "Found 0 nav elements, 6 buttons",
+      "navigationDetails": {
+        "navLinks": 0,
+        "buttons": 6,
+        "clickableElements": []
+      }
+    },
+    {
+      "name": "Performance Metrics",
+      "status": "PASS",
+      "details": "Performance metrics collected",
+      "metrics": {
+        "domContentLoaded": 0,
+        "loadComplete": 0,
+        "totalLoadTime": 854.1000000014901
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "initial-load",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/initial-load.png"
+    },
+    {
+      "name": "login-form",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/login-form.png"
+    },
+    {
+      "name": "before-login",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/before-login.png"
+    },
+    {
+      "name": "after-login",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/after-login.png"
+    },
+    {
+      "name": "dashboard",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/dashboard.png"
+    },
+    {
+      "name": "responsive-Mobile Portrait",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/responsive-mobile-portrait.png"
+    },
+    {
+      "name": "responsive-Mobile Landscape",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/responsive-mobile-landscape.png"
+    },
+    {
+      "name": "responsive-Tablet",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/responsive-tablet.png"
+    },
+    {
+      "name": "responsive-Desktop",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/responsive-desktop.png"
+    },
+    {
+      "name": "navigation",
+      "path": "/Users/chirag13/development/agent/async-code/async-code-web/screenshots/navigation.png"
+    }
+  ],
+  "consoleErrors": [
+    {
+      "message": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "timestamp": "2025-07-02T06:25:32.529Z"
+    },
+    {
+      "message": "Error loading projects: Error: Failed to fetch projects\n    at i.getProjects (https://claudegod.narraite.xyz/_next/static/chunks/app/page-721484b4fe6a4741.js:1:39431)\n    at async ev (https://claudegod.narraite.xyz/_next/static/chunks/app/page-721484b4fe6a4741.js:1:18005)",
+      "timestamp": "2025-07-02T06:25:32.530Z"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 400 ()",
+      "timestamp": "2025-07-02T06:25:33.213Z"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 404 ()",
+      "timestamp": "2025-07-02T06:25:33.213Z"
+    },
+    {
+      "message": "Error loading tasks: {code: PGRST200, details: Searched for a foreign key relationship between 't…n the schema 'public', but no matches were found., hint: null, message: Could not find a relationship between 'tasks' and 'projects' in the schema cache}",
+      "timestamp": "2025-07-02T06:25:33.215Z"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 404 (NOT FOUND)",
+      "timestamp": "2025-07-02T06:25:33.308Z"
+    },
+    {
+      "message": "Error loading projects: Error: Failed to fetch projects\n    at i.getProjects (https://claudegod.narraite.xyz/_next/static/chunks/app/page-721484b4fe6a4741.js:1:39431)\n    at async ev (https://claudegod.narraite.xyz/_next/static/chunks/app/page-721484b4fe6a4741.js:1:18005)",
+      "timestamp": "2025-07-02T06:25:33.308Z"
+    },
+    {
+      "message": "Failed to load resource: the server responded with a status of 400 ()",
+      "timestamp": "2025-07-02T06:25:33.332Z"
+    },
+    {
+      "message": "Error loading tasks: {code: PGRST200, details: Searched for a foreign key relationship between 't…n the schema 'public', but no matches were found., hint: null, message: Could not find a relationship between 'tasks' and 'projects' in the schema cache}",
+      "timestamp": "2025-07-02T06:25:33.333Z"
+    }
+  ],
+  "overallStatus": "PASS",
+  "summary": {
+    "totalTests": 7,
+    "passedTests": 7,
+    "failedTests": 0,
+    "partialTests": 0,
+    "passRate": "100.0%",
+    "consoleErrorsCount": 9,
+    "screenshotsCount": 10
+  }
+}
