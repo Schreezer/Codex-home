@@ -5,7 +5,7 @@ import threading
 import logging
 from models import TaskStatus
 from database import DatabaseOperations
-from utils import run_ai_code_task_v2  # Updated function name
+from utils import run_ai_code_task_smart  # Updated to smart execution
 from github import Github
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def start_task():
             return jsonify({'error': 'Failed to create task'}), 500
         
         # Start task in background thread
-        thread = threading.Thread(target=run_ai_code_task_v2, args=(task['id'], user_id, github_token))
+        thread = threading.Thread(target=run_ai_code_task_smart, args=(task['id'], user_id, github_token))
         thread.daemon = True
         thread.start()
         

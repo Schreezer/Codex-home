@@ -6,6 +6,8 @@ import queue
 import atexit
 
 from .code_task_v2 import run_ai_code_task_v2, _run_ai_code_task_v2_internal
+from .direct_execution import run_direct_task
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -93,4 +95,24 @@ def cleanup_codex_processor():
         codex_worker_thread.join(timeout=5.0)
 
 atexit.register(cleanup_codex_processor)
+
+
+def run_ai_code_task_smart(task_id: int, user_id: str, github_token: str):
+    """
+    Smart task execution that chooses the best method based on configuration
+    
+    Environment variables:
+    - EXECUTION_MODE: 'direct' (default) or 'docker'
+    - FORCE_DOCKER: 'true' to force Docker execution
+    """
+    
+    execution_mode = os.getenv('EXECUTION_MODE', 'direct').lower()
+    force_docker = os.getenv('FORCE_DOCKER', 'false').lower() == 'true'
+    
+    if force_docker or execution_mode == 'docker':
+        logger.info(f"🐳 Using Docker execution for task {task_id}")
+        return run_ai_code_task_v2(task_id, user_id, github_token)
+    else:
+        logger.info(f"⚡ Using direct host execution for task {task_id}")
+        return run_direct_task(task_id, user_id, github_token)
 
