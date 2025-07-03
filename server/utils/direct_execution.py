@@ -128,9 +128,9 @@ class DirectTaskExecutor:
         
         logger.info(f"🚀 Executing Claude Code with prompt: {prompt[:100]}...")
         
-        # Run Claude CLI
+        # Run Claude CLI with automation flags
         result = subprocess.run([
-            'claude', prompt
+            'claude', '--dangerously-skip-permissions', '--yes', prompt
         ], cwd=repo_dir, capture_output=True, text=True, timeout=600, env=env)
         
         logger.info(f"🔍 Claude CLI exit code: {result.returncode}")
