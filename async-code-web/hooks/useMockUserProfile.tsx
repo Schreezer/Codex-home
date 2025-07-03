@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 // Mock user profile for SimpleAuth (using proper UUID)
 const MOCK_USER = {
@@ -16,23 +16,47 @@ export function useMockUserProfile() {
     const [error, setError] = useState<Error | null>(null);
 
     const refreshProfile = useCallback(async () => {
-        // For mock implementation, just return the stored profile
+        // For mock implementation, load from both localStorage and Supabase
         setIsLoading(true);
         
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 100));
+        let preferences = {};
         
-        // Load preferences from localStorage if available
+        // Try to load from Supabase first (more reliable)
         try {
-            const stored = localStorage.getItem('mock-user-preferences');
-            if (stored) {
-                const preferences = JSON.parse(stored);
-                setProfile(prev => ({ ...prev, preferences }));
+            const { SupabaseService } = await import("@/lib/supabase-service");
+            await SupabaseService.ensureMockUser(MOCK_USER.id);
+            
+            const { getSupabase } = await import("@/lib/supabase");
+            const supabase = getSupabase();
+            
+            const { data: user, error } = await supabase
+                .from('users')
+                .select('preferences')
+                .eq('id', MOCK_USER.id)
+                .single();
+            
+            if (!error && user?.preferences) {
+                preferences = user.preferences;
+                // Also save to localStorage as backup
+                localStorage.setItem('mock-user-preferences', JSON.stringify(preferences));
             }
         } catch (err) {
-            console.warn('Failed to load stored preferences:', err);
+            console.warn('Failed to load from Supabase, trying localStorage:', err);
         }
         
+        // Fallback to localStorage if Supabase failed
+        if (Object.keys(preferences).length === 0) {
+            try {
+                const stored = localStorage.getItem('mock-user-preferences');
+                if (stored) {
+                    preferences = JSON.parse(stored);
+                }
+            } catch (err) {
+                console.warn('Failed to load stored preferences:', err);
+            }
+        }
+        
+        setProfile(prev => ({ ...prev, preferences }));
         setIsLoading(false);
     }, []);
 
@@ -59,6 +83,11 @@ export function useMockUserProfile() {
             setIsLoading(false);
         }
     }, [profile]);
+
+    // Auto-load preferences from localStorage on mount
+    useEffect(() => {
+        refreshProfile();
+    }, [refreshProfile]);
 
     return {
         profile,
