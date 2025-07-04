@@ -64,6 +64,11 @@ class DirectTaskExecutor:
         subprocess.run(['chmod', '755', str(workspace)], timeout=10)
         subprocess.run(['chown', '-R', 'claude-user:claude-user', str(workspace)], timeout=30)
         
+        # Create empty .claude.json for Claude CLI compatibility
+        claude_json = workspace / ".claude.json"
+        claude_json.write_text("{}")
+        subprocess.run(['chown', 'claude-user:claude-user', str(claude_json)], timeout=10)
+        
         return workspace
     
     def _setup_credentials(self, workspace: Path, oauth_tokens: dict = None, api_key: str = None):
