@@ -134,9 +134,17 @@ class DirectTaskExecutor:
         logger.info(f"🚀 Executing Claude Code with prompt: {prompt[:100]}...")
         
         # Run Claude CLI as claude-user (not root) with automation flags
+        # Use a longer timeout and better error handling
+        logger.info(f"🔧 Running: sudo -u claude-user -E claude --dangerously-skip-permissions '{prompt[:50]}...'")
+        logger.info(f"🗂️ Working directory: {repo_dir}")
+        logger.info(f"🏠 HOME directory: {env.get('HOME', 'not set')}")
+        
         result = subprocess.run([
             'sudo', '-u', 'claude-user', '-E', 'claude', '--dangerously-skip-permissions', prompt
-        ], cwd=repo_dir, capture_output=True, text=True, timeout=600, env=env)
+        ], cwd=repo_dir, capture_output=True, text=True, timeout=900, env=env)
+        
+        logger.info(f"📤 Claude stdout: {result.stdout[:200]}...")
+        logger.info(f"📥 Claude stderr: {result.stderr[:200]}..."))
         
         logger.info(f"🔍 Claude CLI exit code: {result.returncode}")
         
