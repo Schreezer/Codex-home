@@ -59,6 +59,11 @@ class DirectTaskExecutor:
         """Create isolated workspace for task"""
         workspace = self.work_dir / f"task-{task_id}-{int(datetime.now().timestamp())}"
         workspace.mkdir(exist_ok=True, parents=True)
+        
+        # Set permissions so claude-user can access the workspace
+        subprocess.run(['chmod', '755', str(workspace)], timeout=10)
+        subprocess.run(['chown', '-R', 'claude-user:claude-user', str(workspace)], timeout=30)
+        
         return workspace
     
     def _setup_credentials(self, workspace: Path, oauth_tokens: dict = None, api_key: str = None):
@@ -108,10 +113,10 @@ class DirectTaskExecutor:
         if result.returncode != 0:
             raise Exception(f"Git clone failed: {result.stderr}")
         
-        # Configure git
-        subprocess.run(['git', 'config', 'user.email', 'claude-code@automation.com'], 
+        # Configure git as claude-user
+        subprocess.run(['sudo', '-u', 'claude-user', 'git', 'config', 'user.email', 'claude-code@automation.com'], 
                       cwd=repo_dir, timeout=10)
-        subprocess.run(['git', 'config', 'user.name', 'Claude Code Automation'], 
+        subprocess.run(['sudo', '-u', 'claude-user', 'git', 'config', 'user.name', 'Claude Code Automation'], 
                       cwd=repo_dir, timeout=10)
         
         logger.info("✅ Repository cloned successfully")
@@ -128,9 +133,9 @@ class DirectTaskExecutor:
         
         logger.info(f"🚀 Executing Claude Code with prompt: {prompt[:100]}...")
         
-        # Run Claude CLI with automation flags
+        # Run Claude CLI as claude-user (not root) with automation flags
         result = subprocess.run([
-            'claude', '--dangerously-skip-permissions', prompt
+            'sudo', '-u', 'claude-user', '-E', 'claude', '--dangerously-skip-permissions', prompt
         ], cwd=repo_dir, capture_output=True, text=True, timeout=600, env=env)
         
         logger.info(f"🔍 Claude CLI exit code: {result.returncode}")
@@ -144,8 +149,8 @@ class DirectTaskExecutor:
     def _extract_changes(self, repo_dir: Path) -> dict:
         """Extract git changes after Claude execution"""
         
-        # Check if there are any changes
-        result = subprocess.run(['git', 'status', '--porcelain'], 
+        # Check if there are any changes (as claude-user)
+        result = subprocess.run(['sudo', '-u', 'claude-user', 'git', 'status', '--porcelain'], 
                                cwd=repo_dir, capture_output=True, text=True, timeout=10)
         
         if not result.stdout.strip():
@@ -157,33 +162,33 @@ class DirectTaskExecutor:
                 'changed_files': []
             }
         
-        # Add and commit changes
-        subprocess.run(['git', 'add', '.'], cwd=repo_dir, timeout=30)
+        # Add and commit changes (as claude-user)
+        subprocess.run(['sudo', '-u', 'claude-user', 'git', 'add', '.'], cwd=repo_dir, timeout=30)
         
         commit_result = subprocess.run([
-            'git', 'commit', '-m', 'Claude Code: Automated changes'
+            'sudo', '-u', 'claude-user', 'git', 'commit', '-m', 'Claude Code: Automated changes'
         ], cwd=repo_dir, capture_output=True, text=True, timeout=30)
         
         if commit_result.returncode != 0:
             raise Exception(f"Git commit failed: {commit_result.stderr}")
         
-        # Get commit hash
-        hash_result = subprocess.run(['git', 'rev-parse', 'HEAD'], 
+        # Get commit hash (as claude-user)
+        hash_result = subprocess.run(['sudo', '-u', 'claude-user', 'git', 'rev-parse', 'HEAD'], 
                                    cwd=repo_dir, capture_output=True, text=True, timeout=10)
         commit_hash = hash_result.stdout.strip()
         
-        # Get diff
-        diff_result = subprocess.run(['git', 'diff', 'HEAD~1'], 
+        # Get diff (as claude-user)
+        diff_result = subprocess.run(['sudo', '-u', 'claude-user', 'git', 'diff', 'HEAD~1'], 
                                    cwd=repo_dir, capture_output=True, text=True, timeout=30)
         git_diff = diff_result.stdout
         
-        # Get patch
-        patch_result = subprocess.run(['git', 'format-patch', 'HEAD~1', '--stdout'], 
+        # Get patch (as claude-user)
+        patch_result = subprocess.run(['sudo', '-u', 'claude-user', 'git', 'format-patch', 'HEAD~1', '--stdout'], 
                                     cwd=repo_dir, capture_output=True, text=True, timeout=30)
         git_patch = patch_result.stdout
         
-        # Get changed files
-        files_result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1'], 
+        # Get changed files (as claude-user)
+        files_result = subprocess.run(['sudo', '-u', 'claude-user', 'git', 'diff', '--name-only', 'HEAD~1'], 
                                     cwd=repo_dir, capture_output=True, text=True, timeout=10)
         changed_files = [f.strip() for f in files_result.stdout.split('\n') if f.strip()]
         
