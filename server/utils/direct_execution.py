@@ -143,8 +143,9 @@ class DirectTaskExecutor:
         logger.info(f"🗂️ Working directory: {repo_dir}")
         logger.info(f"🏠 HOME directory: {env.get('HOME', 'not set')}")
         
+        # Use sudo with HOME environment variable explicitly set
         result = subprocess.run([
-            'sudo', '-u', 'claude-user', '-E', 'claude', '--dangerously-skip-permissions', '--print', prompt
+            'sudo', '-u', 'claude-user', f'HOME={workspace}', 'claude', '--dangerously-skip-permissions', '--print', prompt
         ], cwd=repo_dir, capture_output=True, text=True, timeout=600, env=env)
         
         logger.info(f"📤 Claude stdout: {result.stdout[:200]}...")
