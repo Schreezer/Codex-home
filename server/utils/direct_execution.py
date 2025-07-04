@@ -144,7 +144,7 @@ class DirectTaskExecutor:
         ], cwd=repo_dir, capture_output=True, text=True, timeout=900, env=env)
         
         logger.info(f"📤 Claude stdout: {result.stdout[:200]}...")
-        logger.info(f"📥 Claude stderr: {result.stderr[:200]}..."))
+        logger.info(f"📥 Claude stderr: {result.stderr[:200]}...")
         
         logger.info(f"🔍 Claude CLI exit code: {result.returncode}")
         
