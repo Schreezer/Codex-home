@@ -131,7 +131,7 @@ class DirectTaskExecutor:
         logger.info("✅ Repository cloned successfully")
         return repo_dir
     
-    def _execute_claude(self, workspace: Path, repo_dir: Path, prompt: str) -> tuple:
+    def _execute_claude(self, workspace: Path, repo_dir: Path, prompt: str, oauth_tokens: dict = None) -> tuple:
         """Execute Claude Code CLI with the prompt"""
         
         # Set HOME to workspace so Claude finds credentials
@@ -139,6 +139,13 @@ class DirectTaskExecutor:
         env['HOME'] = str(workspace)
         env['CI'] = 'true'
         env['NO_COLOR'] = '1'
+        
+        # Set OAuth environment variables if provided (following GitHub Action pattern)
+        if oauth_tokens:
+            env['CLAUDE_ACCESS_TOKEN'] = oauth_tokens.get('access_token', '')
+            env['CLAUDE_REFRESH_TOKEN'] = oauth_tokens.get('refresh_token', '')
+            env['CLAUDE_EXPIRES_AT'] = str(oauth_tokens.get('expires_at', ''))
+            logger.info("🔐 OAuth environment variables set for Claude CLI")
         
         logger.info(f"🚀 Executing Claude Code with prompt: {prompt[:100]}...")
         
@@ -282,8 +289,9 @@ class DirectTaskExecutor:
                 workspace, task['repo_url'], task['target_branch'], github_token
             )
             
-            # Execute Claude
-            stdout, stderr = self._execute_claude(workspace, repo_dir, prompt)
+            # Execute Claude with OAuth tokens if using OAuth
+            oauth_for_execution = oauth_tokens if use_oauth else None
+            stdout, stderr = self._execute_claude(workspace, repo_dir, prompt, oauth_for_execution)
             
             # Extract changes
             changes = self._extract_changes(repo_dir)
