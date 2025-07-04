@@ -24,6 +24,8 @@ services:
     environment:
       - FLASK_ENV=development
       - FLASK_DEBUG=True
+      - EXECUTION_MODE=direct
+      - FORCE_DOCKER=false
     env_file:
       - ./server/.env
     volumes:

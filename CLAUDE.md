@@ -103,18 +103,29 @@ This is a **parallel AI code agent platform** that executes multiple AI-powered 
 - JSONB fields for flexible metadata storage
 - Auto-sync triggers between auth.users and public.users
 
-### Container Execution Model
+### Dual Execution Model
 
-**Specialized Images**:
-- `claude-code-automation:latest`: Contains Claude Code CLI with OAuth support
-- `codex-automation:latest`: Contains Codex CLI with enhanced privileges
+**Direct Host Execution (Default)**:
+- AI agents run directly on the host system
+- Claude Code CLI installed globally: `npm install -g @anthropic-ai/claude-code`
+- Tasks execute as `claude-user` with `--dangerously-skip-permissions` flag
+- Working directory: `/tmp/claude-tasks/task-{id}-{timestamp}/`
+- Faster execution, direct filesystem access
+- Configuration: `EXECUTION_MODE=direct` (default)
 
-**Execution Flow**:
+**Container Execution (Optional)**:
+- AI agents run in isolated Docker containers
+- Specialized images: `claude-code-automation:latest`, `codex-automation:latest`
+- Enhanced security through containerization
+- Resource limits and network isolation
+- Configuration: `EXECUTION_MODE=docker` or `FORCE_DOCKER=true`
+
+**Execution Flow (Both Modes)**:
 1. Clone target repository with GitHub token authentication
 2. Configure AI agent credentials (OAuth or API key)
-3. Execute AI agent with user prompt in isolated environment
+3. Execute AI agent with user prompt in chosen environment
 4. Generate git patches and diffs for later PR creation
-5. Clean up containers with comprehensive orphan removal
+5. Clean up workspace/containers after completion
 
 ### Code Organization Patterns
 
@@ -150,6 +161,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_key
 
 # Docker
 DOCKER_HOST=unix:///var/run/docker.sock
+
+# Execution Mode Configuration
+EXECUTION_MODE=direct        # 'direct' for host execution, 'docker' for containers
+FORCE_DOCKER=false          # Set to 'true' to force Docker execution
 ```
 
 ### OAuth Implementation Details
